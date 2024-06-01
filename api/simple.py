@@ -1,5 +1,3 @@
-
-
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
@@ -22,30 +20,31 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-MODEL = tf.keras.models.load_model("../saved_models/coffee.keras")
+MODEL = tf.keras.models.load_model("../saved_models/coffee.keras", compile=False)
 CLASS_NAMES = ['Cerscospora', 'Healthy', 'Leaf rust', 'Miner', 'Phoma']
+
 @app.get("/ping")
 async def ping():
     return "Hello, I am alive"
 
 def read_file_as_image(data) -> np.ndarray:
-    image = np.array(Image.open(BytesIO(data)))
+    image = Image.open(BytesIO(data)).convert('RGB')  # Ensure image is in RGB format
+    image = image.resize((128, 128))  # Resize image
+    image = np.array(image) / 255.0  # Rescale image
     return image
 
 @app.post("/predict")
-async def predict(
-    file: UploadFile = File(...)
-):
+async def predict(file: UploadFile = File(...)):
     image = read_file_as_image(await file.read())
-    img_batch = np.expand_dims(image, 0)
-    
+    img_batch = np.expand_dims(image, 0)  # Add batch dimension
+
     predictions = MODEL.predict(img_batch)
 
     predicted_class = CLASS_NAMES[np.argmax(predictions[0])]
-    confidence = np.max(predictions[0])
+    confidence = float(np.max(predictions[0]))
     return {
         'class': predicted_class,
-        'confidence': float(confidence)
+        'confidence': confidence
     }
 
 if __name__ == "__main__":
