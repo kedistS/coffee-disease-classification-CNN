@@ -20,7 +20,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-MODEL = tf.keras.models.load_model("../saved_models/1.keras")
+MODEL = tf.keras.models.load_model("../saved_models/coffee.keras")
 CLASS_NAMES = ['Cerscospora', 'Healthy', 'Leaf rust', 'Miner', 'Phoma']
 
 # Load the trained Autoencoder model
@@ -47,7 +47,7 @@ def is_anomaly(img):
     reconstruction_error = tf.reduce_mean(tf.square(img_array - reconstructed_img))
 
     # Set a threshold for anomaly detection
-    threshold = 0.01  # Adjust this value based on your validation results
+    threshold = 0.001  # Adjust this value based on your validation results
 
     return reconstruction_error > threshold
 
